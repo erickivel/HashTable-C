@@ -2,7 +2,7 @@
 #include "../include/hash.h"
 #include <stdio.h>
 
-int main() {
+int main(void) {
   struct HashTable hashTable;
 
   initializeHashTable(&hashTable);

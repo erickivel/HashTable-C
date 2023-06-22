@@ -7,8 +7,10 @@
 
 void initializeHashTable(struct HashTable *hashTable) {
   for (int i = 0; i < TABLE_SIZE; i++) {
-    hashTable->table1[i].isValid = 0;
-    hashTable->table2[i].isValid = 0;
+    hashTable->table1[i].value = -1;
+    hashTable->table2[i].value = -1;
+    hashTable->table1[i].status = EMPTY;
+    hashTable->table2[i].status = EMPTY;
   }
 }
 
@@ -19,12 +21,15 @@ int h2(int key) { return floor(TABLE_SIZE * (key * 0.9 - floor(key * 0.9))); }
 int search(struct HashTable hashTable, int key) {
   int index = h1(key);
 
-  if (hashTable.table1[index].isValid && hashTable.table1[index].value == key) {
+  if (hashTable.table1[index].status == EMPTY) {
+    return -1;
+  } else if (hashTable.table1[index].status == VALID &&
+             hashTable.table1[index].value == key) {
     return index;
-  } else if (!hashTable.table1[index].isValid) {
+  } else {
     index = h2(key);
-    if (hashTable.table2[index].isValid &&
-        hashTable.table2[index].value == key) {
+    if (hashTable.table2[index].value == key &&
+        hashTable.table2[index].status == VALID) {
       return index;
     }
   }
@@ -33,30 +38,40 @@ int search(struct HashTable hashTable, int key) {
 }
 
 void hashTableInsert(struct HashTable *hashTable, int newKey) {
+  int keyExists = search(*hashTable, newKey);
+
+  // To avoid duplicates
+  if (keyExists != -1)
+    return;
+
   int newKeyIndex = h1(newKey);
   int oldKey = hashTable->table1[newKeyIndex].value;
 
-  if (hashTable->table1[newKeyIndex].isValid) {
+  if (hashTable->table1[newKeyIndex].status == VALID) {
     int oldKeyIndex = h2(oldKey);
     hashTable->table2[oldKeyIndex].value = oldKey;
-    hashTable->table2[oldKeyIndex].isValid = 1;
+    hashTable->table2[oldKeyIndex].status = VALID;
   }
 
   hashTable->table1[newKeyIndex].value = newKey;
-  hashTable->table1[newKeyIndex].isValid = 1;
+  hashTable->table1[newKeyIndex].status = VALID;
 }
 
 void hashTableRemove(struct HashTable *hashTable, int key) {
+  int keyExists = search(*hashTable, key);
+
+  if (keyExists == -1)
+    return;
+
   int index = h2(key);
 
-  if (hashTable->table2[index].isValid &&
+  if (hashTable->table2[index].status == VALID &&
       hashTable->table2[index].value == key) {
-    hashTable->table2[index].isValid = 0;
+    hashTable->table2[index].status = EXCLUDED;
   } else {
     index = h1(key);
-    if (hashTable->table1[index].isValid &&
-        hashTable->table1[index].value == key) {
-      hashTable->table1[index].isValid = 0;
+    if (hashTable->table1[index].value == key) {
+      hashTable->table1[index].status = EXCLUDED;
     }
   }
 }
@@ -70,12 +85,12 @@ void printHashTable(struct HashTable hashTable) {
   int count2 = 0;
 
   for (int i = 0; i < TABLE_SIZE; i++) {
-    if (hashTable.table1[i].isValid) {
+    if (hashTable.table1[i].status == VALID) {
       orderedTable1[count1] = hashTable.table1[i].value;
       count1++;
     }
 
-    if (hashTable.table2[i].isValid) {
+    if (hashTable.table2[i].status == VALID) {
       orderedTable2[count2] = hashTable.table2[i].value;
       count2++;
     }

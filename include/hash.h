@@ -5,7 +5,7 @@
 
 struct Slot {
   int value;
-  int isValid;
+  enum { EMPTY, VALID, EXCLUDED } status;
 };
 
 struct HashTable {
